@@ -1,9 +1,8 @@
-import Catalog from "../../features/catalog/Catalog";
 import { Container, CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import Header from "../layouts/Header";
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
     const [darkMode, setDarkMode] = useState(false);

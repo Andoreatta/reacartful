@@ -1,11 +1,13 @@
 using Api.Data;
 using Microsoft.EntityFrameworkCore;
+using Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
 builder.Services.AddDbContext<StoreContext>(options =>
 {
@@ -25,11 +27,15 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+
+app.UseMiddleware<ExceptionMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseDeveloperExceptionPage();
 }
+
 
 // app.UseHttpsRedirection();
 app.UseCors();

@@ -5,6 +5,7 @@ import Catalog from "../../features/catalog/Catalog";
 import ProductDetails from "../../features/catalog/ProductDetails";
 import About from "../../features/about/AboutPage";
 import Contact from "../../features/contact/ContactPage";
+import ServerError from "../errors/ServerError";
 
 export const router = createBrowserRouter([
     {
@@ -30,6 +31,10 @@ export const router = createBrowserRouter([
             {
                 path: "contact",
                 element: <Contact />
+            },
+            {
+                path: "server-error",
+                element: <ServerError />
             }
         ]
     }
