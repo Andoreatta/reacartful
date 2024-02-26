@@ -63,7 +63,7 @@ export default function Header(props: Readonly<Props>) {
                     </IconButton>
 
                     {rightLinks.map(({ title, path }) => (
-                        <Button color='inherit' key={path} sx={{ ...navstyles }}>
+                        <Button key={path} component={NavLink} to={path} sx={{ ...navstyles }}>
                             {title}
                         </Button>
                     ))}
