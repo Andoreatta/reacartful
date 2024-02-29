@@ -14,45 +14,10 @@ namespace Api.Controllers
             _context = context;
         }
 
-        [HttpGet(Name = "GetBasket")]
-        public async Task<ActionResult<BasketDto>> GetBasket()
-        {
-            Basket basket = await RetrieveBasket();
-            if (basket == null) return NotFound();
 
-            return MapBasketToDto(basket);
-        }
+        // ------------------------ Private Methods ------------------------------------------------
 
-        [HttpPost]  // api/basket?productId=3&quantity=5
-        public async Task<ActionResult<BasketDto>> AddItemToBasket(int productId, int quantity)
-        {
-            var basket = await RetrieveBasket();
-            if (basket == null) basket = CreateBasket();
-            var product = await _context.Products.FindAsync(productId);
-            if (product == null) return NotFound();
-            basket.AddItem(product, quantity);
-
-            var result = await _context.SaveChangesAsync() > 0;
-
-            if (result) return CreatedAtRoute("GetBasket", MapBasketToDto(basket));
-            return BadRequest(new ProblemDetails { Title = "Problem adding item to basket" });
-        }
-
-        [HttpDelete]  // api/basket?productId=3&quantity=5
-        public async Task<ActionResult> RemoveItemFromBasket(int productId, int quantity)
-        {
-            var basket = await RetrieveBasket();
-            if (basket == null) return NotFound();
-
-            basket.RemoveItem(productId, quantity);
-            var result = await _context.SaveChangesAsync() > 0;
-
-            if (result) return Ok();
-            return BadRequest(new ProblemDetails { Title = "Problem removing item from basket" });
-        }
-
-        // ------------------------ Private Methods ------------------------
-
+        // Map the Basket entity to a BasketDto, to be returned to the client
         private BasketDto MapBasketToDto(Basket basket)
         {
             return new BasketDto
@@ -72,6 +37,8 @@ namespace Api.Controllers
             };
         }
 
+
+        // Retrieves the current user's basket from the database
         private async Task<Basket> RetrieveBasket()
         {
             return await _context.Baskets
@@ -80,8 +47,11 @@ namespace Api.Controllers
                 .FirstOrDefaultAsync(user => user.BuyerId == Request.Cookies["buyerId"]);
         }
 
+
+        // Creates a new basket for the current user and stores the user's ID in a cookie
         private Basket CreateBasket()
         {
+            // If the buyerId cookie is not set, create a new basket and set the buyerId cookie
             var buyerId = Guid.NewGuid().ToString();
             var cookieOptions = new CookieOptions
             {
@@ -94,5 +64,53 @@ namespace Api.Controllers
 
             return basket;
         }
+
+
+        // ------------------------ Controller Logic  ------------------------------------------------
+
+        // Returns the current user's basket
+        [HttpGet(Name = "GetBasket")]
+        public async Task<ActionResult<BasketDto>> GetBasket()
+        {
+            // Get the basket if it exists
+            Basket basket = await RetrieveBasket();
+            if (basket == null) return NotFound();
+
+            return MapBasketToDto(basket);
+        }
+
+
+        // Adds a specified quantity of a product to the current user's basket
+        [HttpPost]  // api/basket?productId=3&quantity=5
+        public async Task<ActionResult<BasketDto>> AddItemToBasket(int productId, int quantity)
+        {
+            var basket = await RetrieveBasket();
+            if (basket == null) basket = CreateBasket();
+            var product = await _context.Products.FindAsync(productId);
+            if (product == null) return NotFound();
+            basket.AddItem(product, quantity);
+
+            var result = await _context.SaveChangesAsync() > 0;
+
+            if (result) return CreatedAtRoute("GetBasket", MapBasketToDto(basket));
+            return BadRequest(new ProblemDetails { Title = "Problem adding item to basket" });
+        }
+
+
+        // Removes a specified quantity of a product from the current user's basket
+        [HttpDelete]  // api/basket?productId=3&quantity=5
+        public async Task<ActionResult> RemoveItemFromBasket(int productId, int quantity)
+        {
+            var basket = await RetrieveBasket();
+            if (basket == null) return NotFound();
+
+            basket.RemoveItem(productId, quantity);
+            var result = await _context.SaveChangesAsync() > 0;
+
+            if (result) return Ok();
+            return BadRequest(new ProblemDetails { Title = "Problem removing item from basket" });
+        }
+
+
     }
 }

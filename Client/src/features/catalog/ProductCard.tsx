@@ -1,17 +1,29 @@
 import { Link } from 'react-router-dom';
 import { Product } from '../../app/models/product';
 import { Card, CardMedia, CardContent, Typography, CardActions, Button, CardHeader, Avatar } from '@mui/material';
+import { useState } from 'react';
+import agent from '../../app/api/agent';
 
 interface Props {
     product: Product;
 }
 
 export default function ProductCard(props: Readonly<Props>) {
+
+    const [loading, setLoading] = useState(false);
+
+    function handleAddItemToBasket(productId: number) {
+        setLoading(true);
+        agent.Basket.addItem(productId)
+            .catch(error => console.log(error))
+            .finally(() => setLoading(false));
+    }
+
     return (
         <Card>
 
             <CardHeader avatar={
-                <Avatar sx={{bgcolor: 'secondary.main'}}>
+                <Avatar sx={{ bgcolor: 'secondary.main' }}>
                     {props.product.name.charAt(0).toUpperCase()}
                 </Avatar>
             }
