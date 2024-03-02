@@ -3,8 +3,9 @@ import { toast } from "react-toastify";
 import { router } from "../router/Routes";
 
 axios.defaults.baseURL = 'http://localhost:5032/api/';
+axios.defaults.withCredentials = true;
 
-const sleep = () => new Promise(resolve => setTimeout(resolve, 500));
+const sleep = () => new Promise(resolve => setTimeout(resolve, 250));
 
 const responseBody = (response: AxiosResponse) => response.data;
 

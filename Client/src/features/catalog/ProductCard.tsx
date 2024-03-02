@@ -3,18 +3,22 @@ import { Product } from '../../app/models/product';
 import { Card, CardMedia, CardContent, Typography, CardActions, Button, CardHeader, Avatar } from '@mui/material';
 import { useState } from 'react';
 import agent from '../../app/api/agent';
+import { LoadingButton } from '@mui/lab';
+import { useStoreContext } from '../../app/context/StoreContext';
+import { currencyFormat } from '../../app/util/util';
 
 interface Props {
     product: Product;
 }
 
 export default function ProductCard(props: Readonly<Props>) {
-
     const [loading, setLoading] = useState(false);
+    const { setBasket } = useStoreContext();
 
     function handleAddItemToBasket(productId: number) {
         setLoading(true);
         agent.Basket.addItem(productId)
+            .then(basket => setBasket(basket))
             .catch(error => console.log(error))
             .finally(() => setLoading(false));
     }
@@ -44,7 +48,7 @@ export default function ProductCard(props: Readonly<Props>) {
 
             <CardContent>
                 <Typography gutterBottom color='secondary' variant="h5">
-                    ${(props.product.price / 100).toFixed(2)}
+                    {currencyFormat(props.product.price)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                     {props.product.description}
@@ -52,7 +56,7 @@ export default function ProductCard(props: Readonly<Props>) {
             </CardContent>
 
             <CardActions>
-                <Button size="small">Add to cart</Button>
+                <LoadingButton loading={loading} onClick={() => handleAddItemToBasket(props.product.id)} size="small">Add to cart</LoadingButton>
                 <Button component={Link} to={`/catalog/${props.product.id}`} size="small">View</Button>
             </CardActions>
 
