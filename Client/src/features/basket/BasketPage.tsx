@@ -1,103 +1,94 @@
 import { Box, Button, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
-import { Add, Delete, Remove } from "@mui/icons-material";
-import { useState } from "react";
-import agent from "../../app/api/agent";
-import { LoadingButton } from "@mui/lab";
-import BasketSummary from "./BasketSummary";
-import { Link } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../../app/store/configureStore";
-import { removeItem, setBasket } from "./basketSlice";
-import { BasketItem } from "../../app/models/basket";
+import { Add, Delete, Remove } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
+import BasketSummary from './BasketSummary';
+import { Link } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../../app/store/configureStore';
+import { addBasketItemAsync, removeBasketItemAsync } from './basketSlice';
 
 export default function BasketPage() {
-    const { basket} = useAppSelector(state => state.basket);
     const dispatch = useAppDispatch();
-    const [status, setStatus] = useState({
-        loading: false,
-        name: ''
-    });
+    const { basket, status } = useAppSelector(state => state.basket);
 
-    function handleAddItemToBasket(productId: number, name: string) {
-        setStatus({ loading: true, name });
-        agent.Basket.addItem(productId)
-            .then(basket => dispatch(setBasket(basket)))
-            .catch(error => console.log(error))
-            .finally(() => setStatus({ loading: false, name: '' }));
-    }
-
-    function handleRemoveItemFromBasket(productId: number, quantity = 1, name: string) {
-        setStatus({ loading: true, name });
-        agent.Basket.removeItem(productId, quantity)
-            .then(() => dispatch(removeItem({ productId, quantity })))
-            .catch(error => console.log(error))
-            .finally(() => setStatus({ loading: false, name: '' }));
-    }
-
-    if (!basket) return <Typography variant="h3" align="center">No items in the basket</Typography>
+    if (!basket) return <Typography variant="h3">Your basket is empty</Typography>
 
     return (
         <>
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                <TableContainer component={Paper} sx={{ maxWidth: 800 }}>
-                    <Table sx={{ minWidth: 650 }}>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell><Typography variant="h6">Product</Typography></TableCell>
-                                <TableCell align="right"><Typography variant="h6">Price</Typography></TableCell>
-                                <TableCell align="right"><Typography variant="h6">Quantity</Typography></TableCell>
-                                <TableCell align="right"><Typography variant="h6">Total</Typography></TableCell>
-                                <TableCell align="right"></TableCell>
+            <TableContainer component={Paper}>
+                <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Product</TableCell>
+                            <TableCell align="right">Price</TableCell>
+                            <TableCell align="center">Quantity</TableCell>
+                            <TableCell align="right">Subtotal</TableCell>
+                            <TableCell align="right"></TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {basket.items.map((item) => (
+                            <TableRow
+                                key={item.productId}
+                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                            >
+                                <TableCell component="th" scope="row">
+                                    <Box display='flex' alignItems='center'>
+                                        <img style={{ height: 50, marginRight: 20 }} src={item.pictureUrl} alt={item.productName} />
+                                        <span>{item.productName}</span>
+                                    </Box>
+                                </TableCell>
+                                <TableCell align="right">${(item.price / 100).toFixed(2)}</TableCell>
+                                <TableCell align="center">
+                                    <LoadingButton
+                                        color='error'
+                                        loading={status === 'pendingRemoveItem' + item.productId + 'rem'}
+                                        onClick={() => dispatch(removeBasketItemAsync({
+                                            productId: item.productId, quantity: 1, name: 'rem'
+                                        }))}
+                                    >
+                                        <Remove />
+                                    </LoadingButton>
+                                    {item.quantity}
+                                    <LoadingButton
+                                        loading={status === 'pendingAddItem' + item.productId}
+                                        onClick={() => dispatch(addBasketItemAsync({productId: item.productId}))}
+                                        color='secondary'
+                                    >
+                                        <Add />
+                                    </LoadingButton>
+                                </TableCell>
+                                <TableCell align="right">${((item.price / 100) * item.quantity).toFixed(2)}</TableCell>
+                                <TableCell align="right">
+                                    <LoadingButton
+                                        loading={status === 'pendingRemoveItem' + item.productId + 'del'}
+                                        onClick={() => dispatch(removeBasketItemAsync({
+                                            productId: item.productId, quantity: item.quantity, name: 'del'
+                                        }))}
+                                        color='error'
+                                    >
+                                        <Delete />
+                                    </LoadingButton>
+                                </TableCell>
                             </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {basket.items.map((item: BasketItem) => (
-                                <TableRow key={item.productId}>
-                                    <TableCell component="th" scope="row">
-                                        <Box display='flex' alignItems='center'>
-                                            <img src={item.pictureUrl} alt={item.productName} style={{ width: 50, height: 50, objectFit: 'cover', marginRight: 10 }} />
-                                            <Typography variant="body1">{item.productName}</Typography>
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell align="right"><Typography variant="body1">${(item.price / 100).toFixed(2)}</Typography></TableCell>
-                                    <TableCell align="right"><Typography variant="body1">
-                                        <LoadingButton
-                                            loading={status.loading && status.name === 'remove' + item.productId}
-                                            onClick={() => handleRemoveItemFromBasket(item.productId, 1, 'remove' + item.productId)}
-                                            color="secondary"
-                                        >
-                                            <Remove />
-                                        </LoadingButton>
-                                        {item.quantity}
-                                        <LoadingButton
-                                            loading={status.loading && status.name === 'remove' + item.productId}
-                                            onClick={() => handleAddItemToBasket(item.productId, 'add' + item.productId)}
-                                            color="secondary"
-                                        >
-                                            <Add />
-                                        </LoadingButton>
-                                    </Typography></TableCell>
-                                    <TableCell align="right"><Typography variant="body1">${(item.price * item.quantity / 100).toFixed(2)}</Typography></TableCell>
-                                    <TableCell align="right">
-                                        <LoadingButton
-                                            loading={status.loading && status.name === 'delete' + item.productId}
-                                            onClick={() => handleRemoveItemFromBasket(item.productId, item.quantity, 'delete' + item.productId)}
-                                            color="error"
-                                        >
-                                            <Delete />
-                                        </LoadingButton>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </Box>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
             <Grid container>
-                <Grid item xs={6} />
-                <Grid item xs={6} />
-                <BasketSummary />
-                <Button component={Link} to='/checkout' variant="contained" color="primary" sx={{ mt: 2, ml: 'auto' }}>Checkout</Button>
+                <Grid item xs={6}></Grid>
+                <Grid item xs={6}>
+                    <BasketSummary />
+                    <Button
+                        component={Link}
+                        to={'/checkout'}
+                        variant='contained'
+                        size='large'
+                        fullWidth>
+                        Checkout
+                    </Button>
+                </Grid>
             </Grid>
         </>
+
     )
 }
