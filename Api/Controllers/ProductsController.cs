@@ -1,5 +1,6 @@
 using Api.Data;
 using Api.Entities;
+using Api.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,9 +16,14 @@ namespace Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Product>>> GetAll()
+        public async Task<ActionResult<List<Product>>> GetAll(string orderBy, string searchTerm)
         {
-            return await _context.Products.ToListAsync();
+            var query = _context.Products
+                .Sort(orderBy)
+                .Search(searchTerm)
+                .AsQueryable();
+
+            return await query.ToListAsync();
         }
 
         [HttpGet("{id}")]
