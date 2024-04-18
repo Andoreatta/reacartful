@@ -1,6 +1,8 @@
+using System.Text.Json;
 using Api.Data;
 using Api.Entities;
 using Api.Extensions;
+using Api.RequestHelpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,14 +18,19 @@ namespace Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Product>>> GetAll(string orderBy, string searchTerm)
+        public async Task<ActionResult<List<Product>>> GetAll(ProductParams productParams)
         {
             var query = _context.Products
-                .Sort(orderBy)
-                .Search(searchTerm)
+                .Sort(productParams.OrderBy)
+                .Search(productParams.SearchTerm)
+                .Filter(productParams.Brands, productParams.Types)
                 .AsQueryable();
 
-            return await query.ToListAsync();
+            var products = await PagedList<Product>.ToPagedList(query, productParams.PageNumber, productParams.PageSize);
+
+            Response.Headers.Append("Pagination", JsonSerializer.Serialize(products.Metadata));
+
+            return products;
         }
 
         [HttpGet("{id}")]
